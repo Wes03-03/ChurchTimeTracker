@@ -48,7 +48,7 @@ jobs:
 
   macos:
     name: macOS DMG and Sparkle feed
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Check out source
         uses: actions/checkout@v4
