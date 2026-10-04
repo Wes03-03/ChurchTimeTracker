@@ -183,4 +183,6 @@ jobs:
             throw 'No macOS release files were found in the downloaded artifact.'
           }
 
-          & gh release upload '${{ github.ref_name }}' @($macFiles.FullName) --clobber
+          & gh release upload '${{ github.ref_name }}' @($macFiles.FullName) `
+            --repo '${{ github.repository }}' `
+            --clobber
