@@ -160,9 +160,15 @@ jobs:
         env:
           VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $assetsFile = Get-ChildItem release/windows -Recurse -File -Filter assets.win.json |
+            Select-Object -First 1
+          if (-not $assetsFile) {
+            throw 'The Windows Velopack assets file was not found in the downloaded artifact.'
+          }
+
           ./.tools/vpk upload github `
             --repoUrl 'https://github.com/${{ github.repository }}' `
-            --outputDir release/windows `
+            --outputDir $assetsFile.Directory.FullName `
             --tag '${{ github.ref_name }}' `
             --releaseName 'Church Time Tracker ${{ github.ref_name }}' `
             --publish
@@ -171,4 +177,10 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload '${{ github.ref_name }}' release/macos/* --clobber
+        run: |
+          $macFiles = @(Get-ChildItem release/macos -Recurse -File)
+          if ($macFiles.Count -eq 0) {
+            throw 'No macOS release files were found in the downloaded artifact.'
+          }
+
+          & gh release upload '${{ github.ref_name }}' @($macFiles.FullName) --clobber
