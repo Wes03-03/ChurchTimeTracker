@@ -36,9 +36,11 @@ dotnet publish "$project_path" \
   -p:SparkleFeedUrl="$SPARKLE_FEED_URL" \
   -p:SparklePublicKey="$SPARKLE_PUBLIC_ED_KEY"
 
-app_path="$(find "$project_root/bin/Release/net9.0-maccatalyst" -maxdepth 3 -type d -name 'Church Time Tracker.app' -print -quit)"
+app_path="$(find "$project_root/bin/Release/net9.0-maccatalyst" -maxdepth 4 -type d \
+  \( -name 'ChurchTimeTracker.app' -o -name 'Church Time Tracker.app' \) -print -quit)"
 if [[ -z "$app_path" ]]; then
   echo "Publish completed, but Church Time Tracker.app was not found." >&2
+  find "$project_root/bin/Release/net9.0-maccatalyst" -maxdepth 5 -type d -name '*.app' -print >&2
   exit 1
 fi
 
