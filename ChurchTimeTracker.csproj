@@ -21,12 +21,12 @@
     <SparkleFeedUrl Condition="'$(SparkleFeedUrl)' == ''"></SparkleFeedUrl>
     <SparklePublicKey Condition="'$(SparklePublicKey)' == ''"></SparklePublicKey>
 
-    <ApplicationDisplayVersion>0.3.6</ApplicationDisplayVersion>
-    <ApplicationVersion>9</ApplicationVersion>
-    <Version>0.3.6</Version>
-    <PackageVersion>0.3.6</PackageVersion>
-    <AssemblyVersion>0.3.6.0</AssemblyVersion>
-    <FileVersion>0.3.6.0</FileVersion>
+    <ApplicationDisplayVersion>0.3.7</ApplicationDisplayVersion>
+    <ApplicationVersion>10</ApplicationVersion>
+    <Version>0.3.7</Version>
+    <PackageVersion>0.3.7</PackageVersion>
+    <AssemblyVersion>0.3.7.0</AssemblyVersion>
+    <FileVersion>0.3.7.0</FileVersion>
 
     <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">MSIX</WindowsPackageType>
     <WindowsAppSDKSelfContained Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">true</WindowsAppSDKSelfContained>

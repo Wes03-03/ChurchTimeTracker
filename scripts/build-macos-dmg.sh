@@ -64,6 +64,24 @@ codesign \
   "$staging_dir/Church Time Tracker.app"
 codesign --verify --deep --strict --verbose=2 "$staging_dir/Church Time Tracker.app"
 
+embedded_entitlements="$build_root/embedded-entitlements.plist"
+codesign --display --entitlements :- "$staging_dir/Church Time Tracker.app" \
+  > "$embedded_entitlements" 2>/dev/null
+if [[ "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.files.user-selected.read-write' "$embedded_entitlements")" != "true" ]]; then
+  echo "The packaged app is missing user-selected file read/write access." >&2
+  exit 1
+fi
+
+app_executable="$staging_dir/Church Time Tracker.app/Contents/MacOS/ChurchTimeTracker"
+if [[ ! -f "$app_executable" ]]; then
+  app_executable="$(find "$staging_dir/Church Time Tracker.app/Contents/MacOS" -maxdepth 1 -type f -print -quit)"
+fi
+app_architectures="$(lipo -archs "$app_executable")"
+if [[ "$app_architectures" != *"arm64"* || "$app_architectures" != *"x86_64"* ]]; then
+  echo "Expected a universal Mac app, but found: $app_architectures" >&2
+  exit 1
+fi
+
 hdiutil create \
   -volname 'Church Time Tracker' \
   -srcfolder "$staging_dir" \

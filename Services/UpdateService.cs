@@ -13,10 +13,15 @@ public sealed class UpdateService : IDisposable
     private const string RepositoryMetadataKey = "UpdateRepositoryUrl";
     private const string SparkleFeedMetadataKey = "SUFeedURL";
     private const string SparkleKeyMetadataKey = "SUPublicEDKey";
+    private static readonly TimeSpan InitializationTimeout = TimeSpan.FromSeconds(15);
 
     private readonly Assembly assembly = Assembly.GetExecutingAssembly();
+    private readonly object initializationLock = new();
     private bool initialized;
+    private Task? initializationTask;
+    private string? initializationError;
 #if MACCATALYST
+    private bool disposed;
     private UpSparkleUpdater? sparkleUpdater;
 #endif
 
@@ -39,32 +44,82 @@ public sealed class UpdateService : IDisposable
         ? "Updates are delivered through the app's release feed."
         : "Update checking is enabled in packaged release builds.";
 
-    public void Initialize()
+    public Task InitializeAsync()
     {
         if (initialized || !IsConfigured)
         {
-            return;
+            return Task.CompletedTask;
         }
 
+        lock (initializationLock)
+        {
+            return initializationTask ??= InitializeCoreAsync();
+        }
+    }
+
+    private async Task InitializeCoreAsync()
+    {
+        try
+        {
 #if MACCATALYST
-        sparkleUpdater = new UpSparkleUpdater();
-        sparkleUpdater.Initialize(
-            assembly,
-            Metadata(SparkleFeedMetadataKey),
-            Metadata(SparkleKeyMetadataKey));
+            UpSparkleUpdater updater = new();
+            await updater.InitializeAsync(
+                assembly,
+                Metadata(SparkleFeedMetadataKey),
+                Metadata(SparkleKeyMetadataKey)).ConfigureAwait(false);
+
+            lock (initializationLock)
+            {
+                if (disposed)
+                {
+                    updater.Dispose();
+                    return;
+                }
+
+                sparkleUpdater = updater;
+            }
 #endif
-        initialized = true;
+            initialized = true;
+            initializationError = null;
+        }
+        catch (Exception exception)
+        {
+            initializationError = exception.Message;
+        }
     }
 
     public async Task CheckForUpdatesAsync(bool userInitiated)
     {
-        Initialize();
-
         if (!IsConfigured)
         {
             if (userInitiated)
             {
                 await ShowAlert("Updates unavailable", "This development build is not connected to a release feed.");
+            }
+            return;
+        }
+
+        Task initialization = InitializeAsync();
+        Task completed = await Task.WhenAny(initialization, Task.Delay(InitializationTimeout));
+        if (completed != initialization)
+        {
+            if (userInitiated)
+            {
+                await ShowAlert(
+                    "Updater is taking too long",
+                    "The macOS update helper did not respond. The timer is still safe to use; download the newest DMG from the GitHub Releases page instead.");
+            }
+            return;
+        }
+
+        await initialization;
+        if (!initialized)
+        {
+            if (userInitiated)
+            {
+                await ShowAlert(
+                    "Updates unavailable",
+                    initializationError ?? "The update helper could not be started on this Mac.");
             }
             return;
         }
@@ -151,6 +206,7 @@ public sealed class UpdateService : IDisposable
     public void Dispose()
     {
 #if MACCATALYST
+        disposed = true;
         sparkleUpdater?.Dispose();
         sparkleUpdater = null;
 #endif

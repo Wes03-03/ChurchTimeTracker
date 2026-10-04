@@ -29,12 +29,12 @@ public partial class App : Application
             MinimumHeight = 600
         };
 
-        window.Created += async (_, _) =>
+        window.Created += (_, _) =>
         {
             shortcuts.Register(window);
-            updates.Initialize();
+            _ = updates.InitializeAsync();
 #if WINDOWS
-            await updates.CheckForUpdatesAsync(userInitiated: false);
+            _ = updates.CheckForUpdatesAsync(userInitiated: false);
 #endif
         };
         window.Destroying += (_, _) =>
