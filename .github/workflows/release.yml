@@ -19,7 +19,11 @@ jobs:
       - name: Install .NET 9
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 9.0.305
+
+      - name: Pin .NET 9 workload set
+        shell: pwsh
+        run: Copy-Item .github/dotnet9-global.json global.json
 
       - name: Install MAUI Windows workload
         run: dotnet workload install maui-windows
@@ -56,10 +60,13 @@ jobs:
       - name: Install .NET 9
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 9.0.305
+
+      - name: Pin .NET 9 workload set
+        run: cp .github/dotnet9-global.json global.json
 
       - name: Install MAUI Mac Catalyst workload
-        run: dotnet workload install maui-maccatalyst
+        run: dotnet workload install maui-maccatalyst --version 9.0.305
 
       - name: Validate Sparkle keys
         env:
