@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:ChurchTimeTracker.Models"
+             x:Class="ChurchTimeTracker.Pages.OverviewPage"
+             Title="Reports">
+    <Grid Padding="28,24,28,28" RowDefinitions="Auto,Auto,*" RowSpacing="18" MaximumWidthRequest="1180" HorizontalOptions="Center">
+        <VerticalStackLayout Spacing="4">
+            <Label Text="Reports &amp; export" Style="{StaticResource PageTitle}" />
+            <Label Text="Review category time and notes for any date range, then save a formatted Excel workbook."
+                   Style="{StaticResource MutedText}" />
+        </VerticalStackLayout>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="14">
+                <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="End">
+                    <VerticalStackLayout Spacing="4" Margin="0,0,10,10">
+                        <Label Text="From" FontFamily="OpenSansSemibold" FontSize="12" />
+                        <Border Stroke="{AppThemeBinding Light=#DCE5E2, Dark=#34423F}" StrokeShape="RoundRectangle 10" Padding="10,0" WidthRequest="170">
+                            <DatePicker x:Name="FromDate" Format="MMM d, yyyy" DateSelected="Date_Selected" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="4" Margin="0,0,10,10">
+                        <Label Text="To" FontFamily="OpenSansSemibold" FontSize="12" />
+                        <Border Stroke="{AppThemeBinding Light=#DCE5E2, Dark=#34423F}" StrokeShape="RoundRectangle 10" Padding="10,0" WidthRequest="170">
+                            <DatePicker x:Name="ToDate" Format="MMM d, yyyy" DateSelected="Date_Selected" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <Button Text="Last 7 days" Style="{StaticResource SecondaryButton}" Clicked="LastSeven_Clicked" Margin="0,0,10,10" />
+                    <Button Text="Last 30 days" Style="{StaticResource SecondaryButton}" Clicked="LastThirty_Clicked" Margin="0,0,10,10" />
+                    <Button Text="This month" Style="{StaticResource SecondaryButton}" Clicked="ThisMonth_Clicked" Margin="0,0,10,10" />
+                    <Button x:Name="ExportButton" Text="Save Excel…" Clicked="Export_Clicked" Margin="0,0,0,10" />
+                </FlexLayout>
+
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="22">
+                    <Label x:Name="DateRangeLabel" Style="{StaticResource MutedText}" VerticalTextAlignment="Center" />
+                    <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Category entries" Style="{StaticResource MutedText}" />
+                        <Label x:Name="SessionCountLabel" FontFamily="OpenSansSemibold" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Grid.Column="2" Spacing="6">
+                        <Label Text="Total" Style="{StaticResource MutedText}" />
+                        <Label x:Name="TotalTimeLabel" FontFamily="OpenSansSemibold" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <CollectionView x:Name="Rows" SelectionMode="None">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:SessionRow">
+                        <Border Style="{StaticResource Card}" Padding="18,15">
+                            <Grid ColumnDefinitions="145,*,130" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="5">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Date}" FontFamily="OpenSansSemibold" />
+                                    <Label Text="{Binding TimeRange}" Style="{StaticResource MutedText}" FontSize="12" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding Category}" FontFamily="OpenSansSemibold" FontSize="16" VerticalTextAlignment="Center" />
+                                <Label Grid.Column="2" Text="{Binding Duration}" FontFamily="OpenSansSemibold" FontSize="16" HorizontalTextAlignment="End" VerticalTextAlignment="Center" />
+                                <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Comments}" IsVisible="{Binding HasComments}"
+                                       Style="{StaticResource MutedText}" LineBreakMode="WordWrap" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <VerticalStackLayout x:Name="EmptyState" IsVisible="False" HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                <Label Text="No category time in this date range" Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                <Label Text="Try a wider range, or choose a category on the Timer page." Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <ActivityIndicator x:Name="LoadingIndicator" IsVisible="False" IsRunning="False" Color="{StaticResource Brand}" WidthRequest="42" HeightRequest="42" />
+        </Grid>
+    </Grid>
+</ContentPage>

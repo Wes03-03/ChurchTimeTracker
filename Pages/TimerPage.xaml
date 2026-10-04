@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ChurchTimeTracker.Pages.TimerPage"
+             Title="Timer">
+    <ScrollView>
+        <VerticalStackLayout Padding="28,24,28,36" Spacing="22" MaximumWidthRequest="1180" HorizontalOptions="Center">
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Today" Style="{StaticResource PageTitle}" />
+                <Label Text="Your workday continues if the app closes. Use End day only when you are completely finished."
+                       Style="{StaticResource MutedText}" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource Card}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="18">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="Universal timer" Style="{StaticResource SectionTitle}" />
+                            <Label x:Name="DayHintLabel" Text="Tracks your total active time today" Style="{StaticResource MutedText}" />
+                        </VerticalStackLayout>
+                        <Border Grid.Column="1" x:Name="StatusBadge" Padding="12,6" StrokeThickness="0" StrokeShape="RoundRectangle 20" BackgroundColor="#DFF1E9">
+                            <Label x:Name="StatusLabel" Text="RUNNING" FontFamily="OpenSansSemibold" FontSize="12" TextColor="#2F7D5C" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="28">
+                        <VerticalStackLayout Spacing="2">
+                            <Label x:Name="DayClockLabel" Text="00:00:00" FontFamily="OpenSansSemibold" FontSize="52" CharacterSpacing="1" />
+                            <Label Text="TOTAL ACTIVE TIME" FontFamily="OpenSansSemibold" FontSize="11" Style="{StaticResource MutedText}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label x:Name="CategoryClockLabel" Text="00:00:00" FontFamily="OpenSansSemibold" FontSize="36" CharacterSpacing="1" />
+                            <Label x:Name="ActiveLabel" Text="NO CATEGORY SELECTED" FontFamily="OpenSansSemibold" FontSize="11" TextColor="{StaticResource Accent}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <FlexLayout Grid.Row="2" Direction="Row" Wrap="Wrap" AlignItems="Center">
+                        <Button x:Name="PauseButton" Text="Pause both timers" Style="{StaticResource SecondaryButton}" Clicked="PauseResume_Clicked" Margin="0,0,10,10" />
+                        <Button x:Name="EndDayButton" Text="End day" Style="{StaticResource DangerButton}" Clicked="EndDay_Clicked" Margin="0,0,10,10" />
+                    </FlexLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Padding="18">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" x:Name="CommentRow">
+                    <Border Stroke="{AppThemeBinding Light=#DCE5E2, Dark=#34423F}" StrokeShape="RoundRectangle 10" Padding="10,0">
+                        <Entry x:Name="CommentEntry" Placeholder="Add a note to the selected category" Completed="Comment_Clicked" />
+                    </Border>
+                    <Button Grid.Column="1" Text="Add note" Style="{StaticResource SecondaryButton}" Clicked="Comment_Clicked" />
+                </Grid>
+            </Border>
+
+            <VerticalStackLayout Spacing="12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="Category shortcuts" Style="{StaticResource SectionTitle}" />
+                    <Label Grid.Column="1" Text="Click or use Ctrl+Alt+1 through Ctrl+Alt+0" Style="{StaticResource MutedText}" VerticalTextAlignment="Center" />
+                </Grid>
+                <Label Text="Switching pauses the previous category and resumes the selected one automatically."
+                       Style="{StaticResource MutedText}" />
+                <Label x:Name="ShortcutWarningLabel" TextColor="{StaticResource Danger}" IsVisible="False" />
+                <Label x:Name="EmptySlotsLabel" Text="No category shortcuts are assigned yet. Open Categories to create and assign them."
+                       Style="{StaticResource MutedText}" IsVisible="False" />
+                <FlexLayout x:Name="SlotsPanel" Direction="Row" Wrap="Wrap" AlignItems="Stretch" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,13 @@
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.pfx
+*.cer
+*.mobileprovision
+*.provisionprofile
+.DS_Store
+artifacts/
+Releases/
+sparkle-private-key*

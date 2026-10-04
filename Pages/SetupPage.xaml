@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ChurchTimeTracker.Pages.SetupPage"
+             Title="Categories">
+    <ScrollView>
+        <VerticalStackLayout Padding="28,24,28,36" Spacing="22" MaximumWidthRequest="1180" HorizontalOptions="Center">
+            <VerticalStackLayout Spacing="4">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Categories &amp; quick-start" Style="{StaticResource PageTitle}" />
+                        <Label Text="Create the activities you track, then assign up to ten favorites to the Timer page."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Button x:Name="CheckUpdatesButton"
+                            Grid.Column="1"
+                            Text="Check for updates"
+                            Style="{StaticResource QuietButton}"
+                            Clicked="CheckUpdates_Clicked"
+                            VerticalOptions="Center" />
+                </Grid>
+                <Label x:Name="UpdateStatusLabel"
+                       Style="{StaticResource MutedText}"
+                       FontSize="11"
+                       HorizontalTextAlignment="End" />
+            </VerticalStackLayout>
+
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Start">
+                <Border Style="{StaticResource Card}" FlexLayout.Basis="420" FlexLayout.Grow="1" Margin="0,0,12,12">
+                    <VerticalStackLayout Spacing="14">
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="Categories" Style="{StaticResource SectionTitle}" />
+                            <Label Text="Names remain attached to your history if archived." Style="{StaticResource MutedText}" />
+                        </VerticalStackLayout>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Border Stroke="{AppThemeBinding Light=#DCE5E2, Dark=#34423F}" StrokeShape="RoundRectangle 10" Padding="10,0">
+                                <Entry x:Name="NewName" Placeholder="New category name" Completed="Add_Clicked" />
+                            </Border>
+                            <Button Grid.Column="1" Text="Add" Clicked="Add_Clicked" />
+                        </Grid>
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E7EEEC, Dark=#34423F}" />
+                        <Label x:Name="NoCategoriesLabel" Text="No categories yet. Add your first one above." Style="{StaticResource MutedText}" />
+                        <VerticalStackLayout x:Name="CategoryPanel" Spacing="4" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource Card}" FlexLayout.Basis="520" FlexLayout.Grow="1" Margin="0,0,0,12">
+                    <VerticalStackLayout Spacing="14">
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="Quick-start slots" Style="{StaticResource SectionTitle}" />
+                            <Label Text="Assigned categories appear on the Timer page and respond to their global keyboard shortcut." Style="{StaticResource MutedText}" />
+                        </VerticalStackLayout>
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E7EEEC, Dark=#34423F}" />
+                        <VerticalStackLayout x:Name="SlotPanel" Spacing="7" />
+                    </VerticalStackLayout>
+                </Border>
+            </FlexLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
