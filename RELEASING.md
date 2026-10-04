@@ -24,7 +24,7 @@ If you want the source to remain private, create a separate public release repos
 
 The Sparkle key is free and separate from an Apple Developer certificate. It prevents a forged update from being accepted by the app.
 
-1. Download `Sparkle-2.9.4.tar.xz` from the official Sparkle GitHub release and extract it.
+1. Download `Sparkle-2.9.6.tar.xz` from the official Sparkle GitHub release and extract it.
 2. In Terminal, change to the extracted directory and generate the key:
 
    ```bash
