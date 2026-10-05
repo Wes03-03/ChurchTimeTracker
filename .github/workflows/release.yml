@@ -78,6 +78,29 @@ jobs:
           GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
           bash ./scripts/build-macos-dmg.sh
 
+      - name: Verify packaged app launches
+        run: |
+          app="artifacts/macos/$RELEASE_VERSION/dmg-root/Church Time Tracker.app"
+          executable="$app/Contents/MacOS/ChurchTimeTracker"
+          output="$RUNNER_TEMP/church-time-tracker-startup.log"
+
+          "$executable" >"$output" 2>&1 &
+          app_pid=$!
+          sleep 15
+
+          if ! kill -0 "$app_pid" 2>/dev/null; then
+            wait "$app_pid" || true
+            echo 'Church Time Tracker exited during startup.' >&2
+            cat "$output" >&2
+            find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -type f \
+              -name 'ChurchTimeTracker*' -mmin -5 -print -exec cat {} \; 2>/dev/null || true
+            exit 1
+          fi
+
+          kill "$app_pid"
+          wait "$app_pid" || true
+          cat "$output"
+
       - name: Add stable DMG name
         run: |
           dmg="artifacts/macos/$RELEASE_VERSION/ChurchTimeTracker-$RELEASE_VERSION-mac.dmg"
