@@ -1,0 +1,65 @@
+name: macOS startup smoke test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/macos-startup-smoke.yml'
+      - 'App.xaml'
+      - 'App.xaml.cs'
+      - 'AppShell.xaml'
+      - 'AppShell.xaml.cs'
+      - 'MauiProgram.cs'
+      - 'ChurchTimeTracker.csproj'
+      - 'Pages/**'
+      - 'Services/**'
+      - 'Platforms/MacCatalyst/**'
+      - 'scripts/build-macos-dmg.sh'
+  workflow_dispatch:
+
+jobs:
+  launch:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.305
+
+      - name: Pin .NET 9 workload set
+        run: cp .github/dotnet9-global.json global.json
+
+      - name: Install MAUI Mac Catalyst workload
+        run: dotnet workload install maui-maccatalyst
+
+      - name: Build test DMG
+        run: |
+          VERSION=0.3.9 \
+          BUILD_NUMBER="${{ github.run_number }}" \
+          GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+          bash ./scripts/build-macos-dmg.sh
+
+      - name: Launch packaged app
+        run: |
+          app='artifacts/macos/0.3.9/dmg-root/Church Time Tracker.app'
+          executable="$app/Contents/MacOS/ChurchTimeTracker"
+          output="$RUNNER_TEMP/church-time-tracker-startup.log"
+
+          "$executable" >"$output" 2>&1 &
+          app_pid=$!
+          sleep 15
+
+          if ! kill -0 "$app_pid" 2>/dev/null; then
+            wait "$app_pid" || true
+            echo 'Church Time Tracker exited during startup.' >&2
+            cat "$output" >&2
+            find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -type f \
+              -name 'ChurchTimeTracker*' -mmin -5 -print -exec cat {} \; 2>/dev/null || true
+            exit 1
+          fi
+
+          kill "$app_pid"
+          wait "$app_pid" || true
+          cat "$output"
