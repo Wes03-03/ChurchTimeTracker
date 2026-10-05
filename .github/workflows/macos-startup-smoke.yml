@@ -36,14 +36,14 @@ jobs:
 
       - name: Build test DMG
         run: |
-          VERSION=0.3.9 \
+          VERSION=0.3.10 \
           BUILD_NUMBER="${{ github.run_number }}" \
           GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
           bash ./scripts/build-macos-dmg.sh
 
       - name: Launch packaged app
         run: |
-          app='artifacts/macos/0.3.9/dmg-root/Church Time Tracker.app'
+          app='artifacts/macos/0.3.10/dmg-root/Church Time Tracker.app'
           executable="$app/Contents/MacOS/ChurchTimeTracker"
           output="$RUNNER_TEMP/church-time-tracker-startup.log"
 

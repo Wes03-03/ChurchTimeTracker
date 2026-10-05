@@ -14,7 +14,7 @@ public sealed class GlobalShortcutService
     private const uint ModNoRepeat = 0x4000;
     private nint windowHandle;
 #elif MACCATALYST
-    private const string CarbonFramework = "/System/Library/Frameworks/Carbon.framework/Carbon";
+    private const string CarbonFramework = "/System/Library/Frameworks/Carbon.framework/Frameworks/HIToolbox.framework/HIToolbox";
     private const uint EventClassKeyboard = 0x6B657962;
     private const uint EventHotKeyPressed = 6;
     private const uint EventParamDirectObject = 0x2D2D2D2D;
@@ -61,48 +61,63 @@ public sealed class GlobalShortcutService
             }
         }
 #elif MACCATALYST
-        eventHandlerDelegate = HandleMacEvent;
-        EventTypeSpec eventType = new()
+        try
         {
-            EventClass = EventClassKeyboard,
-            EventKind = EventHotKeyPressed
-        };
+            eventHandlerDelegate = HandleMacEvent;
+            EventTypeSpec eventType = new()
+            {
+                EventClass = EventClassKeyboard,
+                EventKind = EventHotKeyPressed
+            };
 
-        int handlerStatus = InstallApplicationEventHandler(
-            eventHandlerDelegate,
-            1,
-            [eventType],
-            nint.Zero,
-            out eventHandlerReference);
+            int handlerStatus = InstallApplicationEventHandler(
+                eventHandlerDelegate,
+                1,
+                [eventType],
+                nint.Zero,
+                out eventHandlerReference);
 
-        if (handlerStatus != 0)
+            if (handlerStatus != 0)
+            {
+                Warning = "Global keyboard shortcuts are unavailable on this Mac.";
+                Changed?.Invoke();
+                return;
+            }
+
+            uint[] keyCodes = [0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, 0x1D];
+            for (int index = 0; index < keyCodes.Length; index++)
+            {
+                int slotNumber = index + 1;
+                EventHotKeyId id = new() { Signature = 0x43545431, Id = (uint)slotNumber };
+                int status = RegisterEventHotKey(
+                    keyCodes[index],
+                    ControlKey | OptionKey,
+                    id,
+                    GetApplicationEventTarget(),
+                    0,
+                    out nint hotKeyReference);
+
+                if (status == 0)
+                {
+                    hotKeyReferences.Add(hotKeyReference);
+                }
+                else
+                {
+                    failedSlots.Add(slotNumber);
+                }
+            }
+        }
+        catch (Exception exception) when (exception is DllNotFoundException
+                                          or EntryPointNotFoundException
+                                          or BadImageFormatException
+                                          or MarshalDirectiveException)
         {
-            Warning = "Global keyboard shortcuts are unavailable on this Mac.";
+            eventHandlerDelegate = null;
+            eventHandlerReference = nint.Zero;
+            hotKeyReferences.Clear();
+            Warning = "Global keyboard shortcuts are unavailable on this Mac. You can still switch categories by clicking a slot.";
             Changed?.Invoke();
             return;
-        }
-
-        uint[] keyCodes = [0x12, 0x13, 0x14, 0x15, 0x17, 0x16, 0x1A, 0x1C, 0x19, 0x1D];
-        for (int index = 0; index < keyCodes.Length; index++)
-        {
-            int slotNumber = index + 1;
-            EventHotKeyId id = new() { Signature = 0x43545431, Id = (uint)slotNumber };
-            int status = RegisterEventHotKey(
-                keyCodes[index],
-                ControlKey | OptionKey,
-                id,
-                GetApplicationEventTarget(),
-                0,
-                out nint hotKeyReference);
-
-            if (status == 0)
-            {
-                hotKeyReferences.Add(hotKeyReference);
-            }
-            else
-            {
-                failedSlots.Add(slotNumber);
-            }
         }
 #endif
 
@@ -124,18 +139,31 @@ public sealed class GlobalShortcutService
             windowHandle = nint.Zero;
         }
 #elif MACCATALYST
-        foreach (nint reference in hotKeyReferences)
+        try
         {
-            UnregisterEventHotKey(reference);
-        }
-        hotKeyReferences.Clear();
+            foreach (nint reference in hotKeyReferences)
+            {
+                UnregisterEventHotKey(reference);
+            }
 
-        if (eventHandlerReference != nint.Zero)
-        {
-            RemoveEventHandler(eventHandlerReference);
-            eventHandlerReference = nint.Zero;
+            if (eventHandlerReference != nint.Zero)
+            {
+                RemoveEventHandler(eventHandlerReference);
+            }
         }
-        eventHandlerDelegate = null;
+        catch (Exception exception) when (exception is DllNotFoundException
+                                          or EntryPointNotFoundException
+                                          or BadImageFormatException
+                                          or MarshalDirectiveException)
+        {
+            // A missing legacy hot-key API must never prevent shutdown or a later retry.
+        }
+        finally
+        {
+            hotKeyReferences.Clear();
+            eventHandlerReference = nint.Zero;
+            eventHandlerDelegate = null;
+        }
 #endif
     }
 

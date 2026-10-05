@@ -19,12 +19,12 @@
     <!-- This is injected by release builds. Local development builds leave updates disabled. -->
     <UpdateRepositoryUrl Condition="'$(UpdateRepositoryUrl)' == ''"></UpdateRepositoryUrl>
 
-    <ApplicationDisplayVersion>0.3.9</ApplicationDisplayVersion>
-    <ApplicationVersion>12</ApplicationVersion>
-    <Version>0.3.9</Version>
-    <PackageVersion>0.3.9</PackageVersion>
-    <AssemblyVersion>0.3.9.0</AssemblyVersion>
-    <FileVersion>0.3.9.0</FileVersion>
+    <ApplicationDisplayVersion>0.3.10</ApplicationDisplayVersion>
+    <ApplicationVersion>13</ApplicationVersion>
+    <Version>0.3.10</Version>
+    <PackageVersion>0.3.10</PackageVersion>
+    <AssemblyVersion>0.3.10.0</AssemblyVersion>
+    <FileVersion>0.3.10.0</FileVersion>
 
     <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">MSIX</WindowsPackageType>
     <WindowsAppSDKSelfContained Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">true</WindowsAppSDKSelfContained>
