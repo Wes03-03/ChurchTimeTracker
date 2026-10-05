@@ -14,7 +14,7 @@ public sealed class GlobalShortcutService
     private const uint ModNoRepeat = 0x4000;
     private nint windowHandle;
 #elif MACCATALYST
-    private const string CarbonFramework = "/System/Library/Frameworks/Carbon.framework/Frameworks/HIToolbox.framework/HIToolbox";
+    private const string CarbonFramework = "/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox";
     private const uint EventClassKeyboard = 0x6B657962;
     private const uint EventHotKeyPressed = 6;
     private const uint EventParamDirectObject = 0x2D2D2D2D;
@@ -24,6 +24,13 @@ public sealed class GlobalShortcutService
     private readonly List<nint> hotKeyReferences = [];
     private EventHandlerDelegate? eventHandlerDelegate;
     private nint eventHandlerReference;
+    private nint carbonLibrary;
+    private GetApplicationEventTargetDelegate? getApplicationEventTarget;
+    private InstallApplicationEventHandlerDelegate? installApplicationEventHandler;
+    private RemoveEventHandlerDelegate? removeEventHandler;
+    private RegisterEventHotKeyDelegate? registerEventHotKey;
+    private UnregisterEventHotKeyDelegate? unregisterEventHotKey;
+    private GetEventParameterDelegate? getEventParameter;
 #endif
 
     public string? Warning { get; private set; }
@@ -63,6 +70,7 @@ public sealed class GlobalShortcutService
 #elif MACCATALYST
         try
         {
+            LoadMacHotKeyApi();
             eventHandlerDelegate = HandleMacEvent;
             EventTypeSpec eventType = new()
             {
@@ -70,7 +78,7 @@ public sealed class GlobalShortcutService
                 EventKind = EventHotKeyPressed
             };
 
-            int handlerStatus = InstallApplicationEventHandler(
+            int handlerStatus = installApplicationEventHandler!(
                 eventHandlerDelegate,
                 1,
                 [eventType],
@@ -89,11 +97,11 @@ public sealed class GlobalShortcutService
             {
                 int slotNumber = index + 1;
                 EventHotKeyId id = new() { Signature = 0x43545431, Id = (uint)slotNumber };
-                int status = RegisterEventHotKey(
+                int status = registerEventHotKey!(
                     keyCodes[index],
                     ControlKey | OptionKey,
                     id,
-                    GetApplicationEventTarget(),
+                    getApplicationEventTarget!(),
                     0,
                     out nint hotKeyReference);
 
@@ -115,6 +123,7 @@ public sealed class GlobalShortcutService
             eventHandlerDelegate = null;
             eventHandlerReference = nint.Zero;
             hotKeyReferences.Clear();
+            UnloadMacHotKeyApi();
             Warning = "Global keyboard shortcuts are unavailable on this Mac. You can still switch categories by clicking a slot.";
             Changed?.Invoke();
             return;
@@ -143,12 +152,12 @@ public sealed class GlobalShortcutService
         {
             foreach (nint reference in hotKeyReferences)
             {
-                UnregisterEventHotKey(reference);
+                unregisterEventHotKey?.Invoke(reference);
             }
 
             if (eventHandlerReference != nint.Zero)
             {
-                RemoveEventHandler(eventHandlerReference);
+                removeEventHandler?.Invoke(eventHandlerReference);
             }
         }
         catch (Exception exception) when (exception is DllNotFoundException
@@ -163,6 +172,7 @@ public sealed class GlobalShortcutService
             hotKeyReferences.Clear();
             eventHandlerReference = nint.Zero;
             eventHandlerDelegate = null;
+            UnloadMacHotKeyApi();
         }
 #endif
     }
@@ -187,7 +197,12 @@ public sealed class GlobalShortcutService
 #elif MACCATALYST
     private int HandleMacEvent(nint nextHandler, nint eventReference, nint userData)
     {
-        int status = GetEventParameter(
+        if (getEventParameter is null)
+        {
+            return 0;
+        }
+
+        int status = getEventParameter(
             eventReference,
             EventParamDirectObject,
             TypeEventHotKeyId,
@@ -221,22 +236,22 @@ public sealed class GlobalShortcutService
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate int EventHandlerDelegate(nint nextHandler, nint eventReference, nint userData);
 
-    [DllImport(CarbonFramework)]
-    private static extern nint GetApplicationEventTarget();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate nint GetApplicationEventTargetDelegate();
 
-    [DllImport(CarbonFramework)]
-    private static extern int InstallApplicationEventHandler(
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int InstallApplicationEventHandlerDelegate(
         EventHandlerDelegate handler,
         uint eventTypeCount,
         [In] EventTypeSpec[] eventTypes,
         nint userData,
         out nint eventHandlerReference);
 
-    [DllImport(CarbonFramework)]
-    private static extern int RemoveEventHandler(nint eventHandlerReference);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int RemoveEventHandlerDelegate(nint eventHandlerReference);
 
-    [DllImport(CarbonFramework)]
-    private static extern int RegisterEventHotKey(
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int RegisterEventHotKeyDelegate(
         uint keyCode,
         uint modifiers,
         EventHotKeyId hotKeyId,
@@ -244,11 +259,11 @@ public sealed class GlobalShortcutService
         uint options,
         out nint hotKeyReference);
 
-    [DllImport(CarbonFramework)]
-    private static extern int UnregisterEventHotKey(nint hotKeyReference);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int UnregisterEventHotKeyDelegate(nint hotKeyReference);
 
-    [DllImport(CarbonFramework)]
-    private static extern int GetEventParameter(
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int GetEventParameterDelegate(
         nint eventReference,
         uint parameterName,
         uint desiredType,
@@ -256,6 +271,36 @@ public sealed class GlobalShortcutService
         uint bufferSize,
         out uint actualSize,
         out EventHotKeyId data);
+
+    private void LoadMacHotKeyApi()
+    {
+        carbonLibrary = NativeLibrary.Load(CarbonFramework);
+        getApplicationEventTarget = LoadExport<GetApplicationEventTargetDelegate>("GetApplicationEventTarget");
+        installApplicationEventHandler = LoadExport<InstallApplicationEventHandlerDelegate>("InstallApplicationEventHandler");
+        removeEventHandler = LoadExport<RemoveEventHandlerDelegate>("RemoveEventHandler");
+        registerEventHotKey = LoadExport<RegisterEventHotKeyDelegate>("RegisterEventHotKey");
+        unregisterEventHotKey = LoadExport<UnregisterEventHotKeyDelegate>("UnregisterEventHotKey");
+        getEventParameter = LoadExport<GetEventParameterDelegate>("GetEventParameter");
+    }
+
+    private T LoadExport<T>(string name) where T : Delegate =>
+        Marshal.GetDelegateForFunctionPointer<T>(NativeLibrary.GetExport(carbonLibrary, name));
+
+    private void UnloadMacHotKeyApi()
+    {
+        getApplicationEventTarget = null;
+        installApplicationEventHandler = null;
+        removeEventHandler = null;
+        registerEventHotKey = null;
+        unregisterEventHotKey = null;
+        getEventParameter = null;
+
+        if (carbonLibrary != nint.Zero)
+        {
+            NativeLibrary.Free(carbonLibrary);
+            carbonLibrary = nint.Zero;
+        }
+    }
 #endif
 
     private void RunSlot(int slotNumber)

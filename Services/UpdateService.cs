@@ -120,7 +120,7 @@ public sealed class UpdateService : IDisposable
             throw new InvalidOperationException("GitHub returned an invalid release response.");
         }
 
-        if (latestVersion <= CurrentVersion())
+        if (latestVersion! <= CurrentVersion())
         {
             if (userInitiated)
             {
