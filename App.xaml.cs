@@ -32,10 +32,7 @@ public partial class App : Application
         window.Created += (_, _) =>
         {
             shortcuts.Register(window);
-            _ = updates.InitializeAsync();
-#if WINDOWS
             _ = updates.CheckForUpdatesAsync(userInitiated: false);
-#endif
         };
         window.Destroying += (_, _) =>
         {

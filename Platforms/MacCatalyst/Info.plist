@@ -2,16 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>SUEnableAutomaticChecks</key>
-    <true/>
-    <key>SUScheduledCheckInterval</key>
-    <integer>86400</integer>
-    <key>SUAutomaticallyUpdate</key>
-    <false/>
-    <key>SUShowReleaseNotes</key>
-    <true/>
-    <key>SUEnableInstallerLauncherService</key>
-    <true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIDeviceFamily</key>

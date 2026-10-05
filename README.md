@@ -30,7 +30,7 @@ On a Mac, use `-f net9.0-maccatalyst` for the final command.
 
 ## Installers and updates
 
-Free GitHub Releases deployment is configured with a Velopack installer/updater on Windows and an unsigned DMG with Sparkle updates on macOS. See [RELEASING.md](RELEASING.md) for the one-time setup and the tag-based update workflow.
+Free GitHub Releases deployment is configured with a Velopack installer/updater on Windows and an unsigned universal DMG on macOS. The Mac app checks GitHub for new releases and opens the download page when an update is available. See [RELEASING.md](RELEASING.md) for the tag-based update workflow.
 
 Signed MSIX and signed/notarized PKG scripts remain available as an optional future distribution path. See [DISTRIBUTION.md](DISTRIBUTION.md).
 

@@ -8,12 +8,8 @@ fi
 
 : "${VERSION:?Set VERSION to a semantic version such as 0.4.0.}"
 : "${BUILD_NUMBER:?Set BUILD_NUMBER to an increasing integer.}"
-: "${SPARKLE_PUBLIC_ED_KEY:?Set SPARKLE_PUBLIC_ED_KEY to the public key printed by Sparkle generate_keys.}"
-
-if [[ -z "${SPARKLE_FEED_URL:-}" ]]; then
-  : "${GITHUB_REPOSITORY:?Set GITHUB_REPOSITORY to owner/repository or set SPARKLE_FEED_URL explicitly.}"
-  SPARKLE_FEED_URL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml"
-fi
+: "${GITHUB_REPOSITORY:?Set GITHUB_REPOSITORY to owner/repository.}"
+repository_url="https://github.com/${GITHUB_REPOSITORY}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_root="$(cd "$script_dir/.." && pwd)"
@@ -33,8 +29,7 @@ dotnet publish "$project_path" \
   -p:ApplicationDisplayVersion="$VERSION" \
   -p:ApplicationVersion="$BUILD_NUMBER" \
   -p:Version="$VERSION" \
-  -p:SparkleFeedUrl="$SPARKLE_FEED_URL" \
-  -p:SparklePublicKey="$SPARKLE_PUBLIC_ED_KEY"
+  -p:UpdateRepositoryUrl="$repository_url"
 
 app_path=""
 while IFS= read -r candidate; do
@@ -63,14 +58,7 @@ mkdir -p "$staging_dir"
 ditto "$app_path" "$staging_dir/Church Time Tracker.app"
 ln -s /Applications "$staging_dir/Applications"
 
-app_plist="$staging_dir/Church Time Tracker.app/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c 'Delete :SUFeedURL' "$app_plist" >/dev/null 2>&1 || true
-/usr/libexec/PlistBuddy -c 'Delete :SUPublicEDKey' "$app_plist" >/dev/null 2>&1 || true
-/usr/libexec/PlistBuddy -c "Add :SUFeedURL string $SPARKLE_FEED_URL" "$app_plist"
-/usr/libexec/PlistBuddy -c "Add :SUPublicEDKey string $SPARKLE_PUBLIC_ED_KEY" "$app_plist"
-
-# Updating Info.plist changes the app bundle seal. Reapply a free ad-hoc signature
-# to the outer bundle without recursively replacing Sparkle's helper signatures.
+# Apply a free ad-hoc signature with the app's sandbox and file-export entitlements.
 codesign \
   --force \
   --sign - \
@@ -104,4 +92,4 @@ hdiutil create \
   "$dmg_path"
 
 echo "Unsigned DMG created: $dmg_path"
-echo "Sparkle feed: $SPARKLE_FEED_URL"
+echo "Update repository: $repository_url"
